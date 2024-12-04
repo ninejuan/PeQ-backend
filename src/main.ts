@@ -22,10 +22,16 @@ async function bootstrap() {
     .addTag('peq')
     .addCookieAuth('sessionId')
     .build();
-  
-    
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api-docs', app, document);
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap()
-  .then(() => {console.log("PeQ API Application Started")})
-  .catch((e) => {console.log("Failed to start PeQ API\n", e)});
+  .then(() => {
+    console.log('PeQ API Application Started');
+  })
+  .catch((e) => {
+    console.log('Failed to start PeQ API\n', e);
+  });
