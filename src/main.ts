@@ -23,6 +23,7 @@ async function bootstrap() {
     .addCookieAuth('sessionId')
     .build();
   
+    
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap()
