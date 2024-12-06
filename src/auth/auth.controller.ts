@@ -1,34 +1,53 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Req,
+  Res,
+  HttpCode,
+  HttpStatus,
+  UnauthorizedException,
+  Post,
+  Body,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { GoogleGuard } from 'src/res/common/guards/google.guard';
+import { Request, Response } from 'express';
+import { JwtAuthGuard } from '../common/guards/jwt.guard';
+import axios from 'axios';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post()
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  @Get('/google')
+  @UseGuards(GoogleGuard)
+  async googleAuth(@Req() req: Request) {
+    return req.user; // google strategy에서 req.user에 user를 지정해줘야 함.
   }
 
-  @Get()
-  findAll() {
-    return this.authService.findAll();
+  @Get('/google/redirect')
+  @UseGuards(GoogleGuard)
+  async googleAuthRedirect(
+    @Req() req: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    console.log('called by remote');
+    const user = req.user;
+    const tokens = await this.authService.handleGoogleLogin(user);
+
+    response.header(
+      'Access-Control-Allow-Origin',
+      'https://subvencion.juany.kr',
+    );
+    response.header('Access-Control-Allow-Credentials', 'true');
+
+    return { accessToken: tokens.accessToken };
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  @Get('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(@Res({ passthrough: true }) response: Response) {
+    return { message: 'Logged out successfully' };
   }
 }
