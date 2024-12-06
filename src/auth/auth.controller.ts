@@ -9,12 +9,18 @@ import {
   UnauthorizedException,
   Post,
   Body,
+  Delete,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { GoogleGuard } from 'src/res/common/guards/google.guard';
-import { Request, Response } from 'express';
-import { JwtAuthGuard } from '../common/guards/jwt.guard';
+import { GoogleGuard } from 'src/common/guards/google.guard';
+import { Request as ExpressRequest, Response } from 'express';
+import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
+import { CreateAuthDto } from './dto/create-user.dto';
 import axios from 'axios';
+
+interface Request extends ExpressRequest {
+  user?: any;  // 또는 더 구체적인 타입을 사용할 수 있습니다
+}
 
 @Controller('auth')
 export class AuthController {
@@ -49,5 +55,29 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async logout(@Res({ passthrough: true }) response: Response) {
     return { message: 'Logged out successfully' };
+  }
+
+  @Get('myinfo')
+  @UseGuards(JwtAuthGuard)
+  async getMyInfo(@Req() req: Request) {
+    const email = req.user['google_mail'];
+    return await this.authService.getMyInfo(email);
+  }
+
+  @Post('myinfo')
+  @UseGuards(JwtAuthGuard) 
+  async updateMyInfo(
+    @Req() req: Request,
+    @Body() updateData: Partial<CreateAuthDto>
+  ) {
+    const email = req.user['google_mail'];
+    return await this.authService.updateMyInfo(email, updateData);
+  }
+
+  @Delete('account')
+  @UseGuards(JwtAuthGuard)
+  async deleteAccount(@Req() req: Request) {
+    const email = req.user['google_mail'];
+    return await this.authService.deleteAccount(email);
   }
 }
