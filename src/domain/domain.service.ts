@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { CreateDomainDto } from './dto/create-domain.dto';
-import { UpdateDomainDto } from './dto/update-domain.dto';
+import { RegisterDomainDto } from './dto/registerDomain.dto';
+import { CreateSubdomainRecordDto } from './dto/createSubdomainRecord.dto';
 
 @Injectable()
 export class DomainService {
-  create(createDomainDto: CreateDomainDto) {
+  registerSubdomain(registerDomainDto: RegisterDomainDto) {
     return 'This action adds a new domain';
   }
 

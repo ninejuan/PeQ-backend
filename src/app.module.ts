@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { DomainModule } from './domain/domain.module';
-import { CloudflareService } from './cloudflare/cloudflare.service';
+import { CloudflareModule } from './cloudflare/cloudflare.module';
 
 @Module({
   imports: [AuthModule, DomainModule, CloudflareModule],

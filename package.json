@@ -29,6 +29,7 @@
     "@nestjs/swagger": "^8.0.7",
     "@nestjs/typeorm": "^10.0.2",
     "axios": "^1.7.7",
+    "class-validator": "^0.14.1",
     "dotenv": "^16.4.5",
     "mongoose": "^8.8.3",
     "passport": "^0.7.0",

@@ -1,7 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { DomainService } from './domain.service';
-import { CreateDomainDto } from './dto/create-domain.dto';
-import { UpdateDomainDto } from './dto/update-domain.dto';
+import { CreateDomainDto } from './dto/registerDomain.dto';
+import { UpdateDomainDto } from './dto/createSubdomainRecord.dto';
 
 @Controller('domain')
 export class DomainController {
