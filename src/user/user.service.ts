@@ -49,7 +49,20 @@ export class UserService {
 
   async getUserDomains(email: string) {
     const user = await this.findByEmail(email);
-    // TODO: 도메인 관련 로직 구현
-    return [];
+    return user.domains;
+  }
+
+  async addUserDomain(email: string, domain: string) {
+    const user = await this.findByEmail(email);
+    user.domains.push(domain);
+    await user.save();
+    return user;
+  }
+
+  async removeUserDomain(email: string, domain: string) {
+    const user = await this.findByEmail(email);
+    user.domains = user.domains.filter((d) => d !== domain);
+    await user.save();
+    return user;
   }
 } 

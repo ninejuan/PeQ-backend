@@ -53,12 +53,12 @@ import {
   OverwriteSubdomainRecordDto,
   DeleteSubdomainRecordDto,
 } from './dto';
-
+import { UserService } from '../user/user.service';
 @Injectable()
 export class DomainService {
   private readonly logger = new Logger(DomainService.name);
 
-  constructor(private cloudflareService: CloudflareService) {}
+  constructor(private cloudflareService: CloudflareService, private userService: UserService) {}
 
   /**
    * 도메인 등록
@@ -82,6 +82,7 @@ export class DomainService {
 
       await domain.save();
       this.logger.log(`도메인 등록됨: ${domain.subdomain_name}`);
+      await this.userService.addUserDomain(userMail, domain.subdomain_name);
       return domain;
     } catch (error) {
       this.logger.error(`도메인 등록 실패: ${error.message}`);
@@ -245,6 +246,7 @@ export class DomainService {
 
         // DB에서 도메인 삭제
         await DomainModel.findByIdAndDelete(domain._id);
+        await this.userService.removeUserDomain(domain.owner_gmail, domain.subdomain_name);
         this.logger.log(`도메인 삭제됨: ${domain.subdomain_name}`);
       }
 
