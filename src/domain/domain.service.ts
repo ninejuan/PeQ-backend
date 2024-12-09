@@ -65,6 +65,14 @@ export class DomainService {
   /**
    * 도메인 등록
    */
+
+  async isDomainOwner(email: string, domainName: string) {
+    const domain = await DomainModel.findOne({
+      subdomain_name: domainName
+    });
+    return domain.owner_gmail === email;
+  }
+
   async registerDomain(registerDomainDto: RegisterDomainDto) {
     try {
       const domain = new DomainModel({
