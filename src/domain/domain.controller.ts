@@ -20,6 +20,8 @@ import {
 } from './dto';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
 import { Request as ExpressRequest } from 'express';
+import { Cron } from '@nestjs/schedule';
+import { CloudflareService } from '../cloudflare/cloudflare.service';
 
 interface Request extends ExpressRequest {
   id?: any;
@@ -29,7 +31,10 @@ interface Request extends ExpressRequest {
 export class DomainController {
   private readonly logger = new Logger(DomainController.name);
 
-  constructor(private readonly domainService: DomainService) {}
+  constructor(
+    private readonly domainService: DomainService,
+    private readonly cloudflareService: CloudflareService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Post('register')
@@ -38,7 +43,7 @@ export class DomainController {
     @Body() registerDomainDto: RegisterDomainDto,
   ) {
     this.logger.log('도메인 등록 요청');
-    return await this.domainService.registerDomain(registerDomainDto);
+    return await this.domainService.registerDomain(registerDomainDto, req.id);
   }
 
   @Get('available/:name')
@@ -109,5 +114,9 @@ export class DomainController {
       deleteSubdomainRecordDto,
     );
   }
+
+  @Cron('0 0 * * *') // 매일 0시 0분에 실행
+  async handleExpiredDomains() {
+    await this.domainService.handleExpiredDomains();
+  }
 }
-// TODO : 도메인 소유자 검증 로직 필요

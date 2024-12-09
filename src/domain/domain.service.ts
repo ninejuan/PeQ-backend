@@ -49,18 +49,16 @@ import { CloudflareService } from '../cloudflare/cloudflare.service';
 import DomainModel from '../models/domain.schema';
 import {
   RegisterDomainDto,
-  CreateSubdomainRecordDto, 
+  CreateSubdomainRecordDto,
   OverwriteSubdomainRecordDto,
-  DeleteSubdomainRecordDto
+  DeleteSubdomainRecordDto,
 } from './dto';
 
 @Injectable()
 export class DomainService {
   private readonly logger = new Logger(DomainService.name);
 
-  constructor(
-    private readonly cloudflareService: CloudflareService
-  ) {}
+  constructor(private cloudflareService: CloudflareService) {}
 
   /**
    * 도메인 등록
@@ -68,18 +66,18 @@ export class DomainService {
 
   async isDomainOwner(email: string, domainName: string) {
     const domain = await DomainModel.findOne({
-      subdomain_name: domainName
+      subdomain_name: domainName,
     });
     return domain.owner_gmail === email;
   }
 
-  async registerDomain(registerDomainDto: RegisterDomainDto) {
+  async registerDomain(registerDomainDto: RegisterDomainDto, userMail: string) {
     try {
       const domain = new DomainModel({
-        subdomain_name: registerDomainDto.name,
-        owner_gmail: registerDomainDto.ownerGmail,
-        expire_date: registerDomainDto.expireDate,
-        records: []
+        subdomain_name: registerDomainDto.subdomain,
+        owner_gmail: userMail,
+        expire_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        records: [],
       });
 
       await domain.save();
@@ -97,7 +95,7 @@ export class DomainService {
   async checkDomainAvailability(name: string): Promise<boolean> {
     try {
       const domain = await DomainModel.findOne({
-        subdomain_name: name.toLowerCase()
+        subdomain_name: name,
       });
 
       this.logger.log(`도메인 사용 가능 여부 확인: ${name}`);
@@ -111,10 +109,12 @@ export class DomainService {
   /**
    * 서브도메인 레코드 생성
    */
-  async createSubdomainRecord(createSubdomainRecordDto: CreateSubdomainRecordDto) {
+  async createSubdomainRecord(
+    createSubdomainRecordDto: CreateSubdomainRecordDto,
+  ) {
     try {
       const domain = await DomainModel.findOne({
-        subdomain_name: createSubdomainRecordDto.name
+        subdomain_name: createSubdomainRecordDto.name,
       });
 
       if (!domain) {
@@ -126,15 +126,16 @@ export class DomainService {
         name: `${createSubdomainRecordDto.name}`,
         content: createSubdomainRecordDto.target,
         proxied: createSubdomainRecordDto.proxied,
-        ttl: createSubdomainRecordDto.ttl
+        ttl: createSubdomainRecordDto.ttl,
       };
 
-      const cloudflareRecord = await this.cloudflareService.createDNSRecord(record);
+      const cloudflareRecord =
+        await this.cloudflareService.createDNSRecord(record);
 
       domain.records.push({
         record_name: createSubdomainRecordDto.name,
         record_value: createSubdomainRecordDto.target,
-        record_type: createSubdomainRecordDto.type
+        record_type: createSubdomainRecordDto.type,
       });
 
       await domain.save();
@@ -148,10 +149,12 @@ export class DomainService {
   /**
    * 서브도메인 레코드 덮어쓰기
    */
-  async overwriteSubdomainRecord(overwriteSubdomainRecordDto: OverwriteSubdomainRecordDto) {
+  async overwriteSubdomainRecord(
+    overwriteSubdomainRecordDto: OverwriteSubdomainRecordDto,
+  ) {
     try {
       const domain = await DomainModel.findOne({
-        subdomain_name: overwriteSubdomainRecordDto.name
+        subdomain_name: overwriteSubdomainRecordDto.name,
       });
 
       if (!domain) {
@@ -160,7 +163,7 @@ export class DomainService {
 
       // 기존 레코드 삭제
       const records = await this.cloudflareService.listDNSRecords({
-        name: overwriteSubdomainRecordDto.name
+        name: overwriteSubdomainRecordDto.name,
       });
 
       if (records.length > 0) {
@@ -173,7 +176,7 @@ export class DomainService {
         name: overwriteSubdomainRecordDto.name,
         content: overwriteSubdomainRecordDto.target,
         proxied: overwriteSubdomainRecordDto.proxied,
-        ttl: overwriteSubdomainRecordDto.ttl
+        ttl: overwriteSubdomainRecordDto.ttl,
       };
 
       return await this.cloudflareService.createDNSRecord(record);
@@ -186,10 +189,12 @@ export class DomainService {
   /**
    * 서브도메인 레코드 삭제
    */
-  async deleteSubdomainRecord(deleteSubdomainRecordDto: DeleteSubdomainRecordDto) {
+  async deleteSubdomainRecord(
+    deleteSubdomainRecordDto: DeleteSubdomainRecordDto,
+  ) {
     try {
       const domain = await DomainModel.findOne({
-        subdomain_name: deleteSubdomainRecordDto.name
+        subdomain_name: deleteSubdomainRecordDto.name,
       });
 
       if (!domain) {
@@ -197,16 +202,16 @@ export class DomainService {
       }
 
       const records = await this.cloudflareService.listDNSRecords({
-        name: deleteSubdomainRecordDto.name
+        name: deleteSubdomainRecordDto.name,
       });
 
       if (records.length > 0) {
         await this.cloudflareService.deleteDNSRecord(records[0].id);
       }
 
-      domain.records = domain.records.filter(
-        record => record.record_name !== deleteSubdomainRecordDto.name
-      );
+      domain.records.pull({
+        record_name: deleteSubdomainRecordDto.name,
+      });
 
       await domain.save();
       return { success: true };
@@ -215,3 +220,38 @@ export class DomainService {
       throw error;
     }
   }
+
+  async handleExpiredDomains() {
+    this.logger.log('만료된 도메인 정리 작업 시작');
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // 만료된 도메인 찾기
+      const expiredDomains = await DomainModel.find({
+        expire_date: { $lt: today },
+      });
+
+      for (const domain of expiredDomains) {
+        // Cloudflare에서 관련 레코드 삭제
+        const records = await this.cloudflareService.listDNSRecords({
+          name: domain.subdomain_name,
+        });
+
+        for (const record of records) {
+          await this.cloudflareService.deleteDNSRecord(record.id);
+          this.logger.log(`Cloudflare 레코드 삭제됨: ${record.name}`);
+        }
+
+        // DB에서 도메인 삭제
+        await DomainModel.findByIdAndDelete(domain._id);
+        this.logger.log(`도메인 삭제됨: ${domain.subdomain_name}`);
+      }
+
+      this.logger.log(`총 ${expiredDomains.length}개의 만료 도메인 정리 완료`);
+    } catch (error) {
+      this.logger.error(`도메인 만료 처리 실패: ${error.message}`);
+      throw error;
+    }
+  }
+}
