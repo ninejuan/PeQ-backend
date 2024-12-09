@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
-
+import { linkToDatabase } from './utils/db.util';
 const env = process.env;
 
 async function bootstrap() {
@@ -26,6 +26,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, document);
 
+  await linkToDatabase();
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap()
