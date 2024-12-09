@@ -147,6 +147,13 @@ export class DomainService {
     }
   }
 
+  async getDomainRecords(domainName: string) {
+    const domain = await DomainModel.findOne({
+      subdomain_name: domainName,
+    });
+    return domain.records;
+  }
+  
   /**
    * 서브도메인 레코드 덮어쓰기
    */
