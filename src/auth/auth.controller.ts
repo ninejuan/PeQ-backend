@@ -65,15 +65,15 @@ export class AuthController {
     return await this.authService.getMyInfo(user);
   }
 
-  @Post('myinfo')
-  @UseGuards(JwtAuthGuard)
-  async updateMyInfo(
-    @Req() req: Request,
-    @Body() updateData: Partial<CreateAuthDto>,
-  ) {
-    const email = req.id;
-    return await this.authService.updateMyInfo(email, updateData);
-  }
+  // @Post('myinfo')
+  // @UseGuards(JwtAuthGuard)
+  // async updateMyInfo(
+  //   @Req() req: Request,
+  //   @Body() updateData: Partial<CreateAuthDto>,
+  // ) {
+  //   const email = req.id;
+  //   return await this.authService.updateMyInfo(email, updateData);
+  // }
 
   @Delete('account')
   @UseGuards(JwtAuthGuard)
@@ -82,3 +82,4 @@ export class AuthController {
     return await this.authService.deleteAccount(email);
   }
 }
+// ToDo: 로그인 할 때마다 유저 정보 업데이트 해주기

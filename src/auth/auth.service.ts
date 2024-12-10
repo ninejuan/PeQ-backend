@@ -12,18 +12,23 @@ export class AuthService {
 
   async handleGoogleLogin(user: any) {
     let existingUser;
+    let userData = {
+      google_mail: user._json.email,
+      name: user._json.name,
+      profilePhoto: user._json.picture,
+    };
+
     try {
       existingUser = await this.userService.findByEmail(user._json.email);
+      existingUser.name = userData.name;
+      existingUser.profilePhoto = userData.profilePhoto;
+      await existingUser.save();
     } catch (e) {
       existingUser = null;
     }
 
     if (!existingUser) {
-      existingUser = await this.userService.create({
-        google_mail: user._json.email,
-        name: user._json.name,
-        profilePhoto: user._json.picture,
-      });
+      existingUser = await this.userService.create(userData);
     }
 
     const payload = { email: existingUser.google_mail, sub: existingUser._id };
