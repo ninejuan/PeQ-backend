@@ -78,8 +78,8 @@ export class AuthController {
   @Delete('account')
   @UseGuards(JwtAuthGuard)
   async deleteAccount(@Req() req: Request) {
-    const email = req.id;
-    return await this.authService.deleteAccount(email);
+    const userData = req.user;
+    return await this.authService.deleteAccount(userData.email);
   }
 }
 // ToDo: 로그인 할 때마다 유저 정보 업데이트 해주기
