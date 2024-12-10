@@ -19,7 +19,8 @@ import { CreateAuthDto } from './dto/create-user.dto';
 import axios from 'axios';
 
 interface Request extends ExpressRequest {
-  user?: any;  // 또는 더 구체적인 타입을 사용할 수 있습니다
+  id?: any; // 또는 더 구체적인 타입을 사용할 수 있습니다
+  user?: any;
 }
 
 @Controller('auth')
@@ -29,7 +30,7 @@ export class AuthController {
   @Get('/google')
   @UseGuards(GoogleGuard)
   async googleAuth(@Req() req: Request) {
-    return req.user; // google strategy에서 req.user에 user를 지정해줘야 함.
+    return req.id; // google strategy에서 req.user에 user를 지정해줘야 함.
   }
 
   @Get('/google/redirect')
@@ -60,24 +61,24 @@ export class AuthController {
   @Get('myinfo')
   @UseGuards(JwtAuthGuard)
   async getMyInfo(@Req() req: Request) {
-    const email = req.user['google_mail'];
-    return await this.authService.getMyInfo(email);
+    const user = req.user;
+    return await this.authService.getMyInfo(user);
   }
 
   @Post('myinfo')
-  @UseGuards(JwtAuthGuard) 
+  @UseGuards(JwtAuthGuard)
   async updateMyInfo(
     @Req() req: Request,
-    @Body() updateData: Partial<CreateAuthDto>
+    @Body() updateData: Partial<CreateAuthDto>,
   ) {
-    const email = req.user['google_mail'];
+    const email = req.id;
     return await this.authService.updateMyInfo(email, updateData);
   }
 
   @Delete('account')
   @UseGuards(JwtAuthGuard)
   async deleteAccount(@Req() req: Request) {
-    const email = req.user['google_mail'];
+    const email = req.id;
     return await this.authService.deleteAccount(email);
   }
 }

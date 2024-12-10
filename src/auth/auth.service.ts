@@ -11,14 +11,18 @@ export class AuthService {
   ) {}
 
   async handleGoogleLogin(user: any) {
-    const { email, name, picture } = user;
-    
-    let existingUser = await this.userService.findByEmail(email);
+    let existingUser;
+    try {
+      existingUser = await this.userService.findByEmail(user._json.email);
+    } catch (e) {
+      existingUser = null;
+    }
+
     if (!existingUser) {
       existingUser = await this.userService.create({
-        google_mail: email,
-        name,
-        profilePhoto: picture,
+        google_mail: user._json.email,
+        name: user._json.name,
+        profilePhoto: user._json.picture,
       });
     }
 
@@ -28,17 +32,10 @@ export class AuthService {
     };
   }
 
-  async getMyInfo(email: string) {
-    const user = await this.userService.findByEmail(email);
-    const domains = await this.userService.getUserDomains(email);
-    
-    return {
-      id: user._id,
-      email: user.google_mail,
-      name: user.name,
-      profilePhoto: user.profilePhoto,
-      domains,
-    };
+  async getMyInfo(userdata: any) {
+    const user = await this.userService.findByEmail(userdata.email);
+
+    return user;
   }
 
   async updateMyInfo(email: string, updateData: Partial<CreateAuthDto>) {
