@@ -44,7 +44,7 @@ records: [{ name: string, record_type: string, value: string }]
  * 
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { CloudflareService } from '../cloudflare/cloudflare.service';
 import DomainModel from '../models/domain.schema';
 import {
@@ -58,7 +58,10 @@ import { UserService } from '../user/user.service';
 export class DomainService {
   private readonly logger = new Logger(DomainService.name);
 
-  constructor(private cloudflareService: CloudflareService, private userService: UserService) {}
+  constructor(
+    private cloudflareService: CloudflareService,
+    private userService: UserService,
+  ) {}
 
   /**
    * 도메인 등록
@@ -72,6 +75,13 @@ export class DomainService {
   }
 
   async registerDomain(registerDomainDto: RegisterDomainDto, userMail: string) {
+    // is domain available
+    const isDomainAvailable = await this.checkDomainAvailability(
+      registerDomainDto.subdomain,
+    );
+    if (!isDomainAvailable) {
+      throw new BadRequestException('도메인이 이미 사용 중입니다');
+    }
     try {
       const domain = new DomainModel({
         subdomain_name: registerDomainDto.subdomain,
@@ -153,7 +163,7 @@ export class DomainService {
     });
     return domain.records;
   }
-  
+
   /**
    * 서브도메인 레코드 덮어쓰기
    */
@@ -253,7 +263,10 @@ export class DomainService {
 
         // DB에서 도메인 삭제
         await DomainModel.findByIdAndDelete(domain._id);
-        await this.userService.removeUserDomain(domain.owner_gmail, domain.subdomain_name);
+        await this.userService.removeUserDomain(
+          domain.owner_gmail,
+          domain.subdomain_name,
+        );
         this.logger.log(`도메인 삭제됨: ${domain.subdomain_name}`);
       }
 

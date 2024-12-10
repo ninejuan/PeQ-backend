@@ -25,6 +25,7 @@ import { CloudflareService } from '../cloudflare/cloudflare.service';
 
 interface Request extends ExpressRequest {
   id?: any;
+  user?: any;
 }
 
 @Controller('domain')
@@ -43,7 +44,11 @@ export class DomainController {
     @Body() registerDomainDto: RegisterDomainDto,
   ) {
     this.logger.log('도메인 등록 요청');
-    return await this.domainService.registerDomain(registerDomainDto, req.id);
+    const user = req.user;
+    return await this.domainService.registerDomain(
+      registerDomainDto,
+      user.email,
+    );
   }
 
   @Get('available/:name')
