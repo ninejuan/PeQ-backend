@@ -9,7 +9,12 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.enableCors({
-    origin: [],
+    origin: [
+      'https://dev.peq.us',
+      'https://peq.us',
+      'https://portal.peq.us',
+      'https://api.peq.us',
+    ],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Accept', 'Authorization', 'Set-Cookie'],
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
