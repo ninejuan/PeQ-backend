@@ -32,7 +32,7 @@ export class AuthService {
     }
 
     const payload = { email: existingUser.google_mail, sub: existingUser._id };
-    return {
+    return { 
       accessToken: this.jwtService.sign(payload),
     };
   }

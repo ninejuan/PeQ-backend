@@ -3,10 +3,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { Observable } from 'rxjs';
 
 export class GoogleGuard extends AuthGuard('google') {
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
-    // console.log('called')
-    return super.canActivate(context);
+  async canActivate(context: ExecutionContext) {
+    console.log('called google guard');
+    // console.log(`활성화함수 결과 : ${await super.canActivate(context)}`);
+    const result = await super.canActivate(context);
+    // console.log(`result : ${result}`);
+    return result as boolean;
   }
 }

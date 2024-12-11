@@ -9,6 +9,7 @@ import {
   UnauthorizedException,
   Post,
   Body,
+  Logger,
   Delete,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -18,11 +19,14 @@ import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { CreateAuthDto } from './dto/create-user.dto';
 import axios from 'axios';
 
+const env = process.env;
+
 interface Request extends ExpressRequest {
   id?: any; // 또는 더 구체적인 타입을 사용할 수 있습니다
   user?: any;
 }
 
+const logger = new Logger('AuthController');
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -30,6 +34,7 @@ export class AuthController {
   @Get('/google')
   @UseGuards(GoogleGuard)
   async googleAuth(@Req() req: Request) {
+    logger.log('google-get called by remote');
     return req.id; // google strategy에서 req.user에 user를 지정해줘야 함.
   }
 
@@ -39,16 +44,11 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    console.log('called by remote');
     const user = req.user;
     const tokens = await this.authService.handleGoogleLogin(user);
 
-    response.header(
-      'Access-Control-Allow-Origin',
-      'https://subvencion.juany.kr',
-    );
+    response.header('Access-Control-Allow-Origin', env.URL);
     response.header('Access-Control-Allow-Credentials', 'true');
-
     return { accessToken: tokens.accessToken };
   }
 
