@@ -9,4 +9,12 @@ export class DeleteSubdomainRecordDto {
   @IsString()
   @IsNotEmpty()
   name: string;
+
+  @ApiProperty({
+    description: '삭제할 레코드 타입',
+    example: 'A',
+  })
+  @IsString()
+  @IsNotEmpty()
+  type: string;
 }

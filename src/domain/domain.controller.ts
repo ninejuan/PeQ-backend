@@ -64,10 +64,10 @@ export class DomainController {
     @Body() createSubdomainRecordDto: CreateSubdomainRecordDto,
   ) {
     this.logger.log('서브도메인 레코드 생성 요청');
-    const user = req.id;
+    const user = req.user;
     const domainName = createSubdomainRecordDto.name;
     const isDomainOwner = await this.domainService.isDomainOwner(
-      user,
+      user.email,
       domainName,
     );
     if (!isDomainOwner) {
@@ -85,10 +85,10 @@ export class DomainController {
     @Body() overwriteSubdomainRecordDto: OverwriteSubdomainRecordDto,
   ) {
     this.logger.log('서브도메인 레코드 덮어쓰기 요청');
-    const user = req.id;
+    const user = req.user;
     const domainName = overwriteSubdomainRecordDto.name;
     const isDomainOwner = await this.domainService.isDomainOwner(
-      user,
+      user.email,
       domainName,
     );
     if (!isDomainOwner) {
@@ -106,10 +106,10 @@ export class DomainController {
     @Body() deleteSubdomainRecordDto: DeleteSubdomainRecordDto,
   ) {
     this.logger.log('서브도메인 레코드 삭제 요청');
-    const user = req.id;
+    const user = req.user;
     const domainName = deleteSubdomainRecordDto.name;
     const isDomainOwner = await this.domainService.isDomainOwner(
-      user,
+      user.email,
       domainName,
     );
     if (!isDomainOwner) {
@@ -125,3 +125,16 @@ export class DomainController {
     await this.domainService.handleExpiredDomains();
   }
 }
+/**
+ * need to fix list
+V * 1. schema에 dns record id 추가
+V * 2. record create 시 record id 추가
+ * 3. record update 시 record id 사용하여 업데이트
+ * 4. record delete 시 record id 사용하여 삭제
+ */
+
+/**
+ * needed service function list
+ * 1. existing domain record 조회
+ * 2. 4th level domain record crud (with cloudflare wildcard ssl)
+ */

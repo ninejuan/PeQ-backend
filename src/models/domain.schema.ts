@@ -1,6 +1,7 @@
 import mongo from 'mongoose';
 
 const recordSchema = new mongo.Schema({
+  record_id: { type: String, required: true },
   record_name: { type: String, required: true },
   record_value: { type: String, required: true },
   record_type: {

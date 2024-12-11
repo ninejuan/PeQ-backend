@@ -144,6 +144,7 @@ export class DomainService {
         await this.cloudflareService.createDNSRecord(record);
 
       domain.records.push({
+        record_id: cloudflareRecord.id,
         record_name: createSubdomainRecordDto.name,
         record_value: createSubdomainRecordDto.target,
         record_type: createSubdomainRecordDto.type,
@@ -167,6 +168,8 @@ export class DomainService {
   /**
    * 서브도메인 레코드 덮어쓰기
    */
+  // 규칙 : subdomain 수정 시 name value는 수정되어선 안됨.
+  // 수정 필요! : domain overwrite는 record id를 이용하여 값 지우고, 새로운 value 추가하는 방식 선택하기.
   async overwriteSubdomainRecord(
     overwriteSubdomainRecordDto: OverwriteSubdomainRecordDto,
   ) {
@@ -180,13 +183,23 @@ export class DomainService {
       }
 
       // 기존 레코드 삭제
-      const records = await this.cloudflareService.listDNSRecords({
-        name: overwriteSubdomainRecordDto.name,
-      });
+      const records = domain.records;
 
-      if (records.length > 0) {
-        await this.cloudflareService.deleteDNSRecord(records[0].id);
+      // 특정한 조건을 만족하는 domain record 삭제
+      const targetRecord = records.find(
+        (record) =>
+          record.record_name === overwriteSubdomainRecordDto.name &&
+          record.record_type === overwriteSubdomainRecordDto.type,
+      );
+      if (targetRecord) {
+        await this.cloudflareService.deleteDNSRecord(targetRecord.record_id);
       }
+
+      // 해당 record를 records array에서 pop하기
+      domain.records.pull({
+        record_name: overwriteSubdomainRecordDto.name,
+        record_type: overwriteSubdomainRecordDto.type,
+      });
 
       // 새 레코드 생성
       const record = {
@@ -197,7 +210,16 @@ export class DomainService {
         ttl: overwriteSubdomainRecordDto.ttl,
       };
 
-      return await this.cloudflareService.createDNSRecord(record);
+      const cloudflareRecord =
+        await this.cloudflareService.createDNSRecord(record);
+      domain.records.push({
+        record_id: cloudflareRecord.id,
+        record_name: overwriteSubdomainRecordDto.name,
+        record_value: overwriteSubdomainRecordDto.target,
+        record_type: overwriteSubdomainRecordDto.type,
+      });
+      await domain.save();
+      return cloudflareRecord;
     } catch (error) {
       this.logger.error(`레코드 덮어쓰기 실패: ${error.message}`);
       throw error;
@@ -216,19 +238,25 @@ export class DomainService {
       });
 
       if (!domain) {
-        throw new Error('도메인을 찾을 수 없습니다');
+        throw new BadRequestException('도메인을 찾을 수 없습니다');
       }
 
-      const records = await this.cloudflareService.listDNSRecords({
-        name: deleteSubdomainRecordDto.name,
-      });
+      const records = domain.records;
 
-      if (records.length > 0) {
-        await this.cloudflareService.deleteDNSRecord(records[0].id);
+      // 특정한 조건을 만족하는 domain record 삭제
+      const targetRecord = records.find(
+        (record) =>
+          record.record_name === deleteSubdomainRecordDto.name &&
+          record.record_type === deleteSubdomainRecordDto.type,
+      );
+      if (targetRecord) {
+        await this.cloudflareService.deleteDNSRecord(targetRecord.record_id);
       }
 
+      // 해당 record를 records array에서 pop하기
       domain.records.pull({
         record_name: deleteSubdomainRecordDto.name,
+        record_type: deleteSubdomainRecordDto.type,
       });
 
       await domain.save();
@@ -277,3 +305,5 @@ export class DomainService {
     }
   }
 }
+// ToDo: e.juany.peq.us같은 4th level domain record 등록 시 regex 사용하여 juany 소유자인지 확인 거치는 로직 추가
+//
