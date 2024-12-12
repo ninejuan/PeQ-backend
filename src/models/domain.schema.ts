@@ -25,6 +25,7 @@ const domainSchema = new mongo.Schema({
     required: true,
     lowercase: true,
   },
+  create_date: { type: Date, default: Date.now },
   expire_date: { type: Date, required: true },
   records: { type: [recordSchema], required: true },
 });

@@ -73,6 +73,20 @@ export class DomainController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('info/:domain')
+  async getDomainInfo(@Req() req: Request, @Param('domain') domain: string) {
+    const user = req.user;
+    const isDomainOwner = await this.domainService.isDomainOwner(
+      user.email,
+      domain,
+    );
+    if (!isDomainOwner) {
+      throw new UnauthorizedException('도메인 소유자가 아닙니다');
+    }
+    return await this.domainService.getDomainInfo(domain);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('record')
   async createSubdomainRecord(
     @Req() req: Request,
