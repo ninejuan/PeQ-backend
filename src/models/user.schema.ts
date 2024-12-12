@@ -5,6 +5,7 @@ const userSchema = new mongo.Schema({
   name: { type: String, required: true },
   profilePhoto: { type: String, default: 'default.png' },
   domains: { type: [String], default: [] },
+  create_date: { type: Date, default: Date.now },
 });
 
 export default mongo.model('user_data', userSchema);
