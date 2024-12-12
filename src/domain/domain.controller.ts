@@ -54,7 +54,22 @@ export class DomainController {
   @Get('available/:name')
   async checkDomainAvailability(@Param('name') name: string) {
     this.logger.log(`도메인 사용 가능 여부 확인 요청: ${name}`);
-    return await this.domainService.checkDomainAvailability(name);
+    const isAvailable = await this.domainService.checkDomainAvailability(name);
+    return { available: isAvailable };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('records/:domain')
+  async getDomainRecords(@Req() req: Request, @Param('domain') domain: string) {
+    const user = req.user;
+    const isDomainOwner = await this.domainService.isDomainOwner(
+      user.email,
+      domain,
+    );
+    if (!isDomainOwner) {
+      throw new UnauthorizedException('도메인 소유자가 아닙니다');
+    }
+    return await this.domainService.getDomainRecords(domain);
   }
 
   @UseGuards(JwtAuthGuard)

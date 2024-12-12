@@ -250,6 +250,7 @@ export class DomainService {
           record.record_type === deleteSubdomainRecordDto.type,
       );
       if (targetRecord) {
+        console.log(targetRecord);
         await this.cloudflareService.deleteDNSRecord(targetRecord.record_id);
       }
 
@@ -258,7 +259,7 @@ export class DomainService {
         record_name: deleteSubdomainRecordDto.name,
         record_type: deleteSubdomainRecordDto.type,
       });
-
+      console.log(domain.records);
       await domain.save();
       return { success: true };
     } catch (error) {
