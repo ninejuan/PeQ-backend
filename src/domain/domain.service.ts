@@ -117,6 +117,13 @@ export class DomainService {
     }
   }
 
+  async getDomainInfo(domainName: string) {
+    const domain = await DomainModel.findOne({
+      subdomain_name: domainName,
+    });
+    return domain;
+  }
+
   /**
    * 서브도메인 레코드 생성
    */
