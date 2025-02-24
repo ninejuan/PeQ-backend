@@ -10,7 +10,7 @@ RUN npm install -g pm2
 RUN corepack enable && corepack prepare yarn@stable --activate
 
 # Copy package files
-COPY package*.json ./
+COPY package*.json yarn.lock ./
 
 # Install dependencies
 RUN yarn install
